@@ -1,0 +1,26 @@
+---
+kernel_modules:
+- overlay
+- br_netfilter
+
+kernel_parameters_list:
+- net.ipv4.ip_forward
+- net.bridge.bridge-nf-call-iptables
+- net.bridge.bridge-nf-call-ip6tables
+
+dependencies:
+- apt-transport-https
+- bash-completion
+- ca-certificates
+- curl
+- gpg
+- jq
+- sshpass 
+
+k8s_dependencies:
+- kubectl
+- kubelet
+- kubeadm
+
+containerd_version: 1.7.12
+runc_version: 1.1.11

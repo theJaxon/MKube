@@ -1,0 +1,35 @@
+---
+- hosts: worker,master 
+  roles:
+    - mkube
+
+- hosts: worker
+  tasks:
+    - name: Enable ssh Password Authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: PasswordAuthentication no
+        line: PasswordAuthentication yes
+  
+    - name: sshd restart
+      service:
+        name: sshd
+        state: restarted
+        enabled: true
+
+- hosts: master 
+  roles:
+    - master
+
+- hosts: master
+  vars:
+    - ansible_ssh_user: vagrant
+    - ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+  tasks:
+    - name: Run Join script 
+      script: /home/vagrant/join.sh
+      delegate_to: worker
+
+- hosts: master
+  roles:
+    - extras
