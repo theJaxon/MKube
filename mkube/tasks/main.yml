@@ -8,3 +8,9 @@
   apt:
     name: podman
     state: present
+
+- name: Disable UFW
+  ansible.builtin.service:
+    name: ufw
+    state: stopped
+    enabled: false
