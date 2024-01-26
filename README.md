@@ -1,5 +1,5 @@
 # MKube
-Just like Kontainer8 but for Mac M1
+Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for Mac M1
 
 ---
 
