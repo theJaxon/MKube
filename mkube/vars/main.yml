@@ -15,6 +15,7 @@ dependencies:
 - curl
 - gpg
 - jq
+- ssh
 - sshpass 
 
 k8s_dependencies:
@@ -22,5 +23,5 @@ k8s_dependencies:
 - kubelet
 - kubeadm
 
-containerd_version: 1.7.12
-runc_version: 1.1.11
+containerd_version: 2.0.0
+runc_version: 1.2.2

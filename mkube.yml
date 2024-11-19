@@ -11,9 +11,9 @@
         regexp: PasswordAuthentication no
         line: PasswordAuthentication yes
   
-    - name: sshd restart
+    - name: ssh restart
       service:
-        name: sshd
+        name: ssh
         state: restarted
         enabled: true
 
