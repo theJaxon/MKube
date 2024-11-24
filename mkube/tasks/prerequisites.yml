@@ -1,10 +1,10 @@
-- name: remove swap line from /etc/fstab
+- name: Remove swap line from /etc/fstab
   lineinfile:
     state: absent 
     regexp: 'swap'
     path: /etc/fstab 
 
-- name: disable swap 
+- name: Disable swap 
   command: "swapoff -a"
   changed_when: false
 
@@ -28,14 +28,14 @@
     state: present
     update_cache: true
 
-- name: add Kubernetes apt-key
+- name: Add Kubernetes apt-key
   get_url:
     url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
     dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
     mode: '0644'
     force: true
 
-- name: add Kubernetes APT repository
+- name: Add Kubernetes APT repository
   apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
     state: present
