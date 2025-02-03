@@ -1,10 +1,10 @@
-- name: remove swap line from /etc/fstab
+- name: Remove swap line from /etc/fstab
   lineinfile:
     state: absent 
     regexp: 'swap'
     path: /etc/fstab 
 
-- name: disable swap 
+- name: Disable swap 
   command: "swapoff -a"
   changed_when: false
 
@@ -28,21 +28,21 @@
     state: present
     update_cache: true
 
-- name: add Kubernetes apt-key
+- name: Add Kubernetes apt-key
   get_url:
-    url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+    url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
     dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
     mode: '0644'
     force: true
 
-- name: add Kubernetes' APT repository
+- name: Add Kubernetes APT repository
   apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
     state: present
     update_cache: true
 
 - set_fact:
-    k8s_version: 1.29.0-1.1
+    k8s_version: 1.30.3-1.1
 
 - name: Install kubernetes packages 
   apt:
@@ -55,6 +55,23 @@
     name: "{{ item }}"
     selection: hold 
   loop: "{{ k8s_dependencies }}"
+
+- name: Install helm
+  unarchive:
+    src: "https://get.helm.sh/helm-v{{ helm_version }}-linux-arm64.tar.gz"
+    dest: /usr/local/bin
+    extra_opts: "--strip-components=1"
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Enable helm auto completion
+  ansible.builtin.copy:
+    src: helm_completion.sh
+    dest: /etc/bash_completion.d/helm
 
 - name: Add machine entries in /etc/hosts 
   blockinfile:

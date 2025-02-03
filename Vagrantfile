@@ -1,9 +1,10 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "gyptazy/ubuntu22.04-arm64"
-  config.vm.box_version = "1.0.1"
-    config.vm.synced_folder ".", "/vagrant",
-    config.vm.box_check_update = false
-    config.vm.box_download_insecure = true
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202407.22.0"
+  config.vm.synced_folder ".", "/vagrant",
+  config.vm.box_check_update = false
+  config.vm.box_download_insecure = true
+
 
     config.vm.define "worker" do |worker|
       worker.vm.hostname = "worker"
@@ -33,6 +34,6 @@ Vagrant.configure("2") do |config|
   
     config.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "mkube.yml"
-      ansible.become   = true
+      ansible.raw_arguments = ['--become']
     end
   end
