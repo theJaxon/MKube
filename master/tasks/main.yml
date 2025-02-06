@@ -52,15 +52,15 @@
       success_msg: "Kubernetes cluster is up and running"
       fail_msg: "Kubernetes cluster isn't initialized yet .."
   rescue:
-  - name: Pull required containers 
-    ansible.builtin.command: kubeadm config images pull
+    - name: Pull required containers 
+      ansible.builtin.command: kubeadm config images pull
 
-- name: Initialize the cluster 
-  ansible.builtin.command: > 
-    kubeadm init 
-    --apiserver-advertise-address=192.168.100.10
-    --pod-network-cidr=10.244.0.0/16
-    --skip-token-print
+    - name: Initialize the cluster 
+      ansible.builtin.command: > 
+        kubeadm init 
+        --apiserver-advertise-address=192.168.100.10
+        --pod-network-cidr=10.244.0.0/16
+        --skip-token-print
 
 - name: Create .kube directory 
   ansible.builtin.file:
@@ -82,9 +82,20 @@
     owner: vagrant
     group: vagrant
 
-- name: Add Flannel CNI Plugin 
-  ansible.builtin.shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/download/v0.24.1/kube-flannel.yml
-  become_user: vagrant
+- name: Add Cilium helm repository
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "https://helm.cilium.io/"
+
+- name: Deploy Cilium chart
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium/cilium
+    release_namespace: kube-system
+    values:
+      ipam:
+        operator:
+          clusterPoolIPv4PodCIDRList: 10.244.0.0/16
   environment:
     KUBECONFIG: /home/vagrant/.kube/conf
 
