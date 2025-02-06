@@ -69,11 +69,13 @@
     block: |
       [Resolve]
       DNSStubListener=no
+  register: systemd_resolved_file
 
 - name: Restart systemd-resolved service
   ansible.builtin.systemd_service:
     name: systemd-resolved.service
     state: restarted
+  when: systemd_resolved_file.changed
 
 - name: Install required packages
   ansible.builtin.dnf:
