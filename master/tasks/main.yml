@@ -17,18 +17,18 @@
     loop:
     - id_rsa
     - id_rsa.pub
-  become_user: vagrant
-  when: key_stat.stat.exists 
+    become_user: vagrant
+    when: key_stat.stat.exists 
 
   always:
   - name: Generate SSH key on master node  
-    shell: 'ssh-keygen -N "" -f id_rsa' 
+    ansible.builtin.shell: 'ssh-keygen -N "" -f id_rsa' 
     args:
       chdir: "~/.ssh" 
     become_user: vagrant  
 
   - name: Add key to worker node
-    shell: "sshpass -p 'vagrant' ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub vagrant@worker"
+    ansible.builtin.shell: "sshpass -p 'vagrant' ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub vagrant@worker"
     args:
       chdir: "~/.ssh"
     become_user: vagrant 
@@ -37,7 +37,7 @@
 - name: Check if kubernetes cluster is already initialized 
   block:
   - name: Check kubernetes status 
-    shell: 'kubectl cluster-info | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"' # The sed part is added to remove ANSI color codes from the output [1]
+    ansible.builtin.shell: 'kubectl cluster-info | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"' # The sed part is added to remove ANSI color codes from the output [1]
     register: kubernetes_status
     become_user: vagrant
     changed_when: false
@@ -53,47 +53,47 @@
       fail_msg: "Kubernetes cluster isn't initialized yet .."
   rescue:
   - name: Pull required containers 
-    command: kubeadm config images pull
+    ansible.builtin.command: kubeadm config images pull
 
-  - name: Initialize the cluster 
-    command: > 
-      kubeadm init 
-      --apiserver-advertise-address=192.168.100.11
-      --pod-network-cidr=10.244.0.0/16
-      --skip-token-print
+- name: Initialize the cluster 
+  ansible.builtin.command: > 
+    kubeadm init 
+    --apiserver-advertise-address=192.168.100.10
+    --pod-network-cidr=10.244.0.0/16
+    --skip-token-print
 
 - name: Create .kube directory 
-  file:
+  ansible.builtin.file:
     state: directory 
     path: "/home/vagrant/.kube"
     owner: vagrant
     group: vagrant
 
 - name: Change admin.conf ownership 
-  file:
+  ansible.builtin.file:
     path: /etc/kubernetes/admin.conf 
     owner: vagrant 
     group: vagrant 
 
 - name: Place kubeconfig file in .kube directory
-  copy:
+  ansible.builtin.copy:
     src: /etc/kubernetes/admin.conf 
     dest: "/home/vagrant/.kube/conf"
     owner: vagrant
     group: vagrant
 
 - name: Add Flannel CNI Plugin 
-  shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/download/v0.24.1/kube-flannel.yml
+  ansible.builtin.shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/download/v0.24.1/kube-flannel.yml
   become_user: vagrant
   environment:
     KUBECONFIG: /home/vagrant/.kube/conf
 
 - name: Generate token that will be used to join nodes 
-  shell: kubeadm token create --print-join-command --ttl 0 2> /dev/null
+  ansible.builtin.shell: kubeadm token create --print-join-command --ttl 0 2> /dev/null
   register: join_command 
 
 - name: store join command in a file 
-  copy:
+  ansible.builtin.copy:
     content: "{{ join_command['stdout'] }}"
     dest: /home/vagrant/join.sh
     owner: vagrant 
