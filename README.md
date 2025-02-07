@@ -8,6 +8,22 @@ MKube is Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for 
 
 ---
 
+### How to use
+```bash
+# Clone the repo
+git clone https://github.com/theJaxon/MKube.git
+
+cd MKube
+
+# Start the machines 
+vagrant up 
+
+# SSH into any of the machines 
+vagrant ssh < master | worker >
+```
+
+---
+
 ### Versions Used
 - Vagrant V2.4.3
 - VMWare Fusion Player V13.6.2 (24409261)
