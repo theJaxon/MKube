@@ -1,6 +1,6 @@
 # MKube
 
-![Mkube](https://img.shields.io/badge/-MKube%201.31.5-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
+![Mkube](https://img.shields.io/badge/-MKube%201.29-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
 
 Provision your local Kubeadm Kubernetes cluster with Vagrant and ansible.
 
