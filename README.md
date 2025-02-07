@@ -16,7 +16,10 @@ git clone https://github.com/theJaxon/MKube.git
 cd MKube
 
 # Start the machines 
-vagrant up 
+vagrant up
+
+# Optional: Download kubeconfig file to use it with headlamp
+scp vagrant@192.168.100.10:~/.kube/conf kubeconf
 
 # SSH into any of the machines 
 vagrant ssh < master | worker >
