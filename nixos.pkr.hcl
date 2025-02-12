@@ -38,7 +38,6 @@ source "vmware-iso" "nixos" {
 
   boot_command = [
     "<wait><enter><wait10>",
-    "mkdir -v -m 0700 .ssh<enter>",
     "sudo su<enter>",
     "parted /dev/sda -- mklabel gpt<enter>",
     "parted /dev/sda -- mkpart ESP fat32 1MB 512MB<enter><wait>",
