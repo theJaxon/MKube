@@ -49,8 +49,8 @@ source "vmware-iso" "nixos" {
     # -L is for setting the label for mkfs.ext4
     "mkfs.ext4 -L NIXOS /dev/sda2<enter><wait>",
     "mount LABEL=NIXOS /mnt<enter><wait>",
-    "mkdir -pv /mnt/boot/efi<enter><wait>",
-    "mount /dev/disk/by-label/ESP /mnt/boot/efi<enter><wait>",
+    "mkdir -pv /mnt/boot<enter><wait>",
+    "mount /dev/disk/by-label/ESP /mnt/boot<enter><wait>",
     "nixos-generate-config --root /mnt<enter><wait>",
     "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/configuration.nix > /mnt/etc/nixos/configuration.nix<enter><wait>",
     "nixos-install --no-root-passwd<enter><wait60>",
