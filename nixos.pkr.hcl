@@ -1,11 +1,11 @@
 packer {
   required_plugins {
     vmware = {
-      version = "~> 1"
+      version = "1.1.0"
       source  = "github.com/hashicorp/vmware"
     }
     vagrant = {
-      version = "~> 1"
+      version = "1.1.5"
       source  = "github.com/hashicorp/vagrant"
     }
   }
