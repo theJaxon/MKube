@@ -23,13 +23,12 @@ source "vmware-iso" "nixos" {
   vmx_remove_ethernet_interfaces = true
   network                        = "nat"
   communicator                   = "ssh"
-
-  ssh_port             = 22
-  ssh_username         = "vagrant"
-  ssh_private_key_file = "./configuration/vagrant_keys/vagrant.key.rsa"
-  ssh_timeout          = "15m"
-  boot_wait            = "1s"
-  firmware             = "efi"
+  ssh_port                       = 22
+  ssh_username                   = "vagrant"
+  ssh_private_key_file           = "./configuration/vagrant_keys/vagrant.key.rsa"
+  ssh_timeout                    = "15m"
+  boot_wait                      = "1s"
+  firmware                       = "efi"
 
   vmx_data = {
     "usb_xhci.present" = true
@@ -38,22 +37,11 @@ source "vmware-iso" "nixos" {
 
   boot_command = [
     "<wait><enter><wait10>",
-    "sudo su<enter>",
-    "parted /dev/sda -- mklabel gpt<enter>",
-    "parted /dev/sda -- mkpart ESP fat32 1MB 512MB<enter><wait>",
-    "parted /dev/sda -- set 1 esp on<enter><wait>",
-    "parted /dev/sda -- mkpart root ext4 512MB 100%<enter><wait>",
-    # -n is for setting the label for mkfs.fat
-    "mkfs.fat -F 32 -n ESP /dev/sda1<enter><wait>",
-    # -L is for setting the label for mkfs.ext4
-    "mkfs.ext4 -L NIXOS /dev/sda2<enter><wait>",
-    "mount LABEL=NIXOS /mnt<enter><wait>",
-    "mkdir -pv /mnt/boot<enter><wait>",
-    "mount /dev/disk/by-label/ESP /mnt/boot<enter><wait>",
-    "nixos-generate-config --root /mnt<enter><wait>",
-    "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/configuration.nix > /mnt/etc/nixos/configuration.nix<enter><wait>",
-    "nixos-install --no-root-passwd<enter><wait60>",
-    "reboot<enter>"
+    "sudo su<enter><wait>",
+    "useradd vagrant --create-home<enter><wait>",
+    "usermod -aG wheel vagrant<enter><wait>",
+    "mkdir -pv /home/vagrant/.ssh<enter><wait>",
+    "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/vagrant_keys/vagrant.pub > /home/vagrant/.ssh/authorized_keys<enter><wait>"  
   ]
   http_port_min    = 8000
   http_port_max    = 8000
@@ -62,9 +50,13 @@ source "vmware-iso" "nixos" {
 }
 
 build {
-  sources = [
-    "source.vmware-iso.nixos"
-  ]
+  sources = ["source.vmware-iso.nixos"]
+  provisioner "shell" {
+    execute_command = "sudo su -c '{{ .Vars }} {{ .Path }}'"
+    script          = "provision.sh"
+    expect_disconnect = true
+  }
+
   post-processors {
     post-processor "vagrant" {
       keep_input_artifact = false
