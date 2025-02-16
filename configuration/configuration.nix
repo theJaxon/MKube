@@ -1,10 +1,17 @@
 { config, pkgs, ... }:
+let
+  control_plane_address = "192.168.100.10";
+  worker_node_address = "192.168.100.11";
+  control_plane_api_server_port = 6443;
+  is_control_plane = if (config.networking.hostName == "controlplane") then true else false;
+
+in
 {
   imports = [
     ./vagrant-hostname.nix
     ./vagrant-network.nix
   ];
-  
+
   boot.loader = {
     # Use systemd boot (EFI only)
     systemd-boot.enable = true;
@@ -15,30 +22,30 @@
     };
   };
 
-  boot.kernel = {
-    sysctl = {
-      "net.ipv4.ip_forward" = 1;
-      "net.bridge.bridge-nf-call-iptables" = 1;
-      "net.bridge.bridge-nf-call-ip6tables" = 1;
-    };
-  };
+  boot.kernelModules = [
+    "br_netfilter"
+    "overlay"
+  ];
 
-  boot.kernelModules = [ "br_netfilter" "overlay" ];
-  
   networking = {
     firewall.enable = false;
     # Used to revert network interface names to (eth0, eth1) convention since later the static IP address for the machine will be assigned to eth1.
     usePredictableInterfaceNames = false;
     hosts = {
-      "192.168.100.10" = ["controlplane" "controlplane.mkube"];
-      "192.168.100.11" = ["worker" "worker.mkube"];
+      "${control_plane_address}" = [
+        "controlplane"
+        "controlplane.mkube"
+      ];
+      "${worker_node_address}" = [
+        "worker"
+        "worker.mkube"
+      ];
     };
   };
 
   virtualisation.vmware.guest.enable = true;
 
-  fileSystems."/" =
-  { 
+  fileSystems."/" = {
     device = "/dev/disk/by-label/NIXOS";
     fsType = "ext4";
   };
@@ -47,7 +54,6 @@
   services.openssh.extraConfig = "PubkeyAcceptedAlgorithms=+ssh-rsa";
   services.openssh.settings.UseDns = false;
   services.timesyncd.enable = true;
-  
   users.mutableUsers = false;
   users.users.root.initialPassword = "vagrant";
 
@@ -55,15 +61,18 @@
     name = "vagrant";
     members = [ "vagrant" ];
   };
-  
+
   users.users.vagrant = {
-    name            = "vagrant";
-    group           = "vagrant";
-    description     = "Vagrant default user.";
-    extraGroups     = [ "users" "wheel" ];
-    password        = "vagrant";
-    home            = "/home/vagrant";
-    createHome      = true;
+    name = "vagrant";
+    group = "vagrant";
+    description = "Vagrant default user.";
+    extraGroups = [
+      "users"
+      "wheel"
+    ];
+    password = "vagrant";
+    home = "/home/vagrant";
+    createHome = true;
     useDefaultShell = true;
     isNormalUser = true;
     openssh.authorizedKeys.keys = [
@@ -72,19 +81,37 @@
     ];
   };
 
-  security.sudo.extraConfig =
-    ''
+  security.sudo.extraConfig = ''
     Defaults env_keep+=SSH_AUTH_SOCK
     Defaults lecture = never
     vagrant ALL=(ALL) NOPASSWD: ALL
     root    ALL=(ALL) SETENV: ALL
     %wheel  ALL=(ALL) NOPASSWD: ALL, SETENV: ALL
-    '';
+  '';
 
   environment.systemPackages = with pkgs; [
+    git
     kubectl
     kubernetes
     kubernetes-helm
-    vim 
+    vim
   ];
+
+  environment.shellAliases = {
+    k = "kubectl";
+  };
+
+  services.kubernetes.kubelet.kubeconfig.server = "https://controlplane:${toString control_plane_api_server_port}";
+  services.kubernetes.roles = if is_control_plane then [ "master" ] else [ "node" ];
+  services.kubernetes = {
+    # Common Kubernetes configuration for all nodes
+    masterAddress = "controlplane";
+    apiserverAddress = "https://controlplane:${toString control_plane_api_server_port}";
+    easyCerts = true;
+    addons.dns.enable = true;
+    apiserver = {
+      securePort = control_plane_api_server_port;
+      advertiseAddress = control_plane_address;
+    };
+  };
 }
