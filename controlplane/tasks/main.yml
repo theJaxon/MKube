@@ -1,0 +1,77 @@
+---
+- name: Check if kubernetes cluster is already initialized 
+  block:
+  - name: Check kubernetes status 
+    ansible.builtin.shell: 'kubectl cluster-info | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"' # The sed part is added to remove ANSI color codes from the output [1]
+    register: kubernetes_status
+    become_user: vagrant
+    changed_when: false
+    environment:
+      KUBECONFIG: /home/vagrant/.kube/conf
+
+  - name: check if kubernetes is up and running 
+    assert:
+      that: 
+        - kubernetes_status.stdout.find('Kubernetes control plane is running') != -1
+        - kubernetes_status.stdout.find('CoreDNS is running') != -1 
+      success_msg: "Kubernetes cluster is up and running"
+      fail_msg: "Kubernetes cluster isn't initialized yet .."
+  rescue:
+    - name: Pull required containers 
+      ansible.builtin.command: kubeadm config images pull
+
+    - name: Initialize the cluster 
+      ansible.builtin.command: > 
+        kubeadm init 
+        --apiserver-advertise-address=192.168.100.10
+        --pod-network-cidr=10.244.0.0/16
+        --skip-token-print
+
+- name: Create .kube directory 
+  ansible.builtin.file:
+    state: directory 
+    path: "/home/vagrant/.kube"
+    owner: vagrant
+    group: vagrant
+
+- name: Change admin.conf ownership 
+  ansible.builtin.file:
+    path: /etc/kubernetes/admin.conf 
+    owner: vagrant 
+    group: vagrant 
+
+- name: Place kubeconfig file in .kube directory
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf 
+    dest: "/home/vagrant/.kube/conf"
+    owner: vagrant
+    group: vagrant
+
+- name: Add Cilium helm repository
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "https://helm.cilium.io/"
+
+- name: Deploy Cilium chart
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium/cilium
+    release_namespace: kube-system
+    values:
+      ipam:
+        operator:
+          clusterPoolIPv4PodCIDRList: 10.244.0.0/16
+  environment:
+    KUBECONFIG: /home/vagrant/.kube/conf
+
+- name: Generate token that will be used to join nodes 
+  ansible.builtin.shell: kubeadm token create --print-join-command --ttl 0 2> /dev/null
+  register: join_command 
+
+- name: store join command in a file 
+  ansible.builtin.copy:
+    content: "{{ join_command['stdout'] }}"
+    dest: /home/vagrant/join.sh
+    owner: vagrant 
+    group: vagrant 
+    mode: '0744'
