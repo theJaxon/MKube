@@ -20,6 +20,7 @@ Vagrant.configure("2") do |config|
       node.vm.provision "shell", path: "scripts/assign_static_ip_address.sh", env: {"IP_ADDRESS" => machine.ip_address }
       node.vm.provision "ansible_local" do |ansible|
         ansible.playbook = "mkube.yml"
+        ansible.config_file = "ansible.cfg"
         ansible.raw_arguments = ['--become']
       end
     end
