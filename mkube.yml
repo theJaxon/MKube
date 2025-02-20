@@ -1,7 +1,12 @@
 ---
-- hosts: worker,controlplane 
-  roles:
-    - mkube
+- hosts: worker,controlplane
+  tasks:
+  - name: Add machine entries in /etc/hosts 
+    ansible.builtin.blockinfile:
+      block: |
+        192.168.100.10 controlplane controlplane.mkube 
+        192.168.100.11 worker worker.mkube 
+      path: /etc/hosts
 
 - hosts: controlplane 
   roles:
