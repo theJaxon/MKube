@@ -8,6 +8,13 @@ MKube is Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for 
 
 ---
 
+### Prerequisites
+```bash
+brew install --cask vagrant-vmware-utility
+```
+
+---
+
 ### How to use
 ```bash
 # Clone the repo
