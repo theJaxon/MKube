@@ -17,10 +17,16 @@
     ansible_ssh_user: vagrant
     ansible_ssh_private_key_file: "/vagrant/vagrant.key.rsa"
   tasks:
+    - name: Copy kubeconfig file for later use by Headlamp
+      copy: 
+        src: /home/vagrant/.kube/conf
+        dest: /vagrant/kubeconf
+
     - name: Change private key permissions
       file:
         path: "/vagrant/vagrant.key.rsa"
         mode: 0600
+
     - name: Run Join script 
       script: /home/vagrant/join.sh
       delegate_to: worker
