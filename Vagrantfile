@@ -6,7 +6,7 @@ machines = [
 
 Vagrant.configure("2") do |config|
   config.vm.box = "the-jaxon/mkube"
-  config.vm.box_version = "1.32"
+  config.vm.box_version = "1.33"
   config.vm.synced_folder ".", "/vagrant"
   config.ssh.insert_key = false
   machines.each do |machine|

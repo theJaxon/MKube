@@ -1,10 +1,10 @@
 # MKube
 
-![Mkube](https://img.shields.io/badge/-MKube%201.29-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
+![Mkube](https://img.shields.io/badge/-MKube%201.33-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
 
 Provision your local Kubeadm Kubernetes cluster with Vagrant and ansible.
 
-MKube is Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for Mac M1.
+MKube is Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for Mac with Apple silicon chip (M1/2/3/4).
 
 ---
 
@@ -25,11 +25,8 @@ cd MKube
 # Start the machines 
 vagrant up
 
-# Optional: Download kubeconfig file to use it with headlamp
-scp vagrant@192.168.100.10:~/.kube/conf kubeconf
-
 # SSH into any of the machines 
-vagrant ssh < master | worker >
+vagrant ssh < controlplane | worker >
 ```
 
 ---
@@ -37,8 +34,8 @@ vagrant ssh < master | worker >
 ### Versions Used
 - Vagrant V2.4.3
 - VMWare Fusion Player V13.6.2 (24409261)
-- Kubeadm 1.29.12-1
-- Fedora 40
+- Kubeadm 1.33.1
+- Fedora 42
 
 ---
 
