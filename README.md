@@ -1,6 +1,6 @@
 # MKube
 
-![Mkube](https://img.shields.io/badge/-MKube%201.33-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
+![Mkube](https://img.shields.io/badge/-MKube%201.35-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
 
 Provision your local Kubeadm Kubernetes cluster with Vagrant and ansible.
 
@@ -9,9 +9,8 @@ MKube is Just like [Kontainer8](https://github.com/theJaxon/Kontainer8) but for 
 ---
 
 ### Prerequisites
-```bash
-brew install --cask vagrant-vmware-utility
-```
+- [Virtualbox](https://www.virtualbox.org/wiki/Downloads)
+- [Vagrant](https://developer.hashicorp.com/vagrant/install)
 
 ---
 
@@ -32,10 +31,10 @@ vagrant ssh < controlplane | worker >
 ---
 
 ### Versions Used
-- Vagrant V2.4.3
-- VMWare Fusion Player V13.6.2 (24409261)
-- Kubeadm 1.33.1
-- Fedora 42
+- Vagrant V2.4.9
+- Virtualbox 7.2.6
+- Kubeadm 1.35.0
+- Fedora **43**
 
 ---
 
@@ -48,5 +47,6 @@ vagrant ssh < controlplane | worker >
 ---
 
 ### References
-1. [Vagrant and VMWare Fusion 13 Player on Apple M1 Pro](https://gist.github.com/sbailliez/2305d831ebcf56094fd432a8717bed93)
+1. [Oracle VirtualBox 7.2 introduces support for macOS on Apple Silicon and Microsoft Windows for Arm](https://blogs.oracle.com/developers/oracle-virtualbox-72)
 2. [Kubernetes cluster with Kubeadm on Fedora](https://docs.fedoraproject.org/en-US/quick-docs/using-kubernetes-kubeadm/)
+3. [chef/bento Packer Templates](https://github.com/chef/bento)
