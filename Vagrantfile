@@ -6,18 +6,17 @@ machines = [
 
 Vagrant.configure("2") do |config|
   config.vm.box = "the-jaxon/mkube"
-  config.vm.box_version = "1.33"
+  config.vm.box_version = "1.35"
   config.vm.synced_folder ".", "/vagrant"
   config.ssh.insert_key = false
   machines.each do |machine|
     config.vm.define machine.hostname do |node|
       node.vm.hostname = machine.hostname
       node.vm.network "private_network", ip: machine.ip_address
-      node.vm.provider "vmware_fusion" do |vf|
-        vf.cpus = machine.cpus
-        vf.memory = machine.memory
+      node.vm.provider "virtualbox" do |vb|
+        vb.cpus = machine.cpus
+        vb.memory = machine.memory
       end
-      node.vm.provision "shell", path: "scripts/assign_static_ip_address.sh", env: {"IP_ADDRESS" => machine.ip_address }
       node.vm.provision "ansible_local" do |ansible|
         ansible.playbook = "mkube.yml"
         ansible.config_file = "ansible.cfg"
