@@ -1,8 +1,8 @@
 # MKube
 
-![Mkube](https://img.shields.io/badge/-MKube%201.35-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
+![Mkube](https://img.shields.io/badge/-MKube%201.37-326CE5?style=for-the-badge&logo=Kubernetes&logoColor=white)
 ![VirtualBox](https://img.shields.io/badge/virtualbox%207.2.6-%23183A61.svg?style=for-the-badge&logo=virtualbox&logoColor=white)
-![Fedora](https://img.shields.io/badge/Fedora%2043-294172?style=for-the-badge&logo=fedora&logoColor=white)
+![Fedora](https://img.shields.io/badge/Fedora%2044-294172?style=for-the-badge&logo=fedora&logoColor=white)
 
 Provision your local Kubeadm Kubernetes cluster with Vagrant and ansible.
 
@@ -32,11 +32,27 @@ vagrant ssh < controlplane | worker >
 
 ---
 
+### Building and releasing the box
+The box is built from [theJaxon/Packer](https://github.com/theJaxon/Packer) (`Fedora/44`) and released on this repo's [GitHub Releases](https://github.com/theJaxon/MKube/releases); the Vagrantfile reads the catalog from the `boxes` release.
+The Packer build needs VirtualBox on Apple silicon, so it runs locally; linting and publishing go through [Dagger](https://dagger.io).
+
+```bash
+export GITHUB_TOKEN=...   # Contents: read & write on this repo
+make release              # lint → build → publish → bump → smoke-test
+```
+
+Rebuilding the same Kubernetes minor replaces that box version. To pick up a rebuilt box locally, remove the cached one first:
+```bash
+vagrant box remove the-jaxon/mkube --box-version 1.37 --provider virtualbox
+```
+
+---
+
 ### Versions Used
 - Vagrant V2.4.9
 - Virtualbox 7.2.6
-- Kubeadm 1.35.0
-- Fedora **43**
+- Kubeadm 1.37.1
+- Fedora **44**
 
 ---
 
