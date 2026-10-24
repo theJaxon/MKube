@@ -23,8 +23,7 @@ ANSIBLE_VERSION = "13.8.0"
 RUBY_IMAGE = "ruby:3.4-slim"
 GH_IMAGE = "alpine:3.22"
 GITHUB_REPO = "theJaxon/MKube"
-CATALOG_TAG = "boxes"          # release holding the Vagrant catalog
-CATALOG_FILE = "mkube.json"    # config.vm.box_url points at this asset
+CATALOG_FILE = "mkube.json"    # every release carries the full catalog; box_url reads the latest
 MAX_ASSET_BYTES = 2 * 1024**3  # GitHub release asset size limit
 
 
@@ -54,15 +53,16 @@ class Mkube:
             dagger.Directory | None, Doc("Packer template directory (defaults to Fedora/44 on main)")
         ] = None,
     ) -> str:
-        """Kubernetes minor version installed by the kickstart, e.g. 1.35.
+        """Kubernetes version the box is pinned to, e.g. 1.37.1.
 
-        This is also the box version, following the existing convention.
+        Read from `kubernetes_version` in the Packer template. This is also the box
+        version, and the GitHub release is tagged v<version>.
         """
         template = template or self.packer_template()
-        kickstart = await template.file("configuration/ks.cfg").contents()
-        match = re.search(r"^kubernetes(1\.\d+)\s*$", kickstart, re.MULTILINE)
+        hcl = await template.file("fedora.pkr.hcl").contents()
+        match = re.search(r'kubernetes_version\s*=\s*"v?(\d+\.\d+\.\d+)"', hcl)
         if not match:
-            raise ValueError("no kubernetes1.XX package found in configuration/ks.cfg")
+            raise ValueError('no kubernetes_version = "vX.Y.Z" found in fedora.pkr.hcl')
         return match.group(1)
 
     @function
@@ -144,15 +144,16 @@ class Mkube:
     async def publish(
         self,
         box_file: Annotated[dagger.File, Doc("The .box produced by Packer")],
-        version: Annotated[str, Doc("Version to publish, e.g. 1.37")],
+        version: Annotated[str, Doc("Version to publish, e.g. 1.37.1")],
         github_token: Annotated[dagger.Secret, Doc("GitHub token with contents: write on the repo")],
         repo: Annotated[str, Doc("GitHub repository hosting the releases")] = GITHUB_REPO,
     ) -> str:
         """Upload the box to GitHub Releases and add it to the Vagrant catalog.
 
-        The box goes to release `box-<version>`; rebuilds of the same version replace
-        the asset in place. The catalog (`mkube.json` on release `boxes`) is what
-        config.vm.box_url points at, and its entry for this version gets the new checksum.
+        Each version gets one release, tagged v<version>, holding the box and the Vagrant
+        catalog (`mkube.json`). The catalog lists every version, so config.vm.box_url can
+        point at the latest release's copy. Rebuilds of the same version replace both
+        assets in place.
         """
         size = await box_file.size()
         if size > MAX_ASSET_BYTES:
@@ -160,7 +161,7 @@ class Mkube:
                 f"box is {size / 1024**3:.2f} GiB; GitHub release assets are limited to 2 GiB"
             )
         checksum = (await box_file.digest(exclude_metadata=True)).removeprefix("sha256:")
-        tag = f"box-{version}"
+        tag = f"v{version}"
         asset = f"mkube-{version}-virtualbox-arm64.box"
         url = f"https://github.com/{repo}/releases/download/{tag}/{asset}"
 
@@ -168,25 +169,31 @@ class Mkube:
             _gh(github_token, repo)
             # Publishing changes GitHub, so never reuse a cached result
             .with_env_variable("CACHE_BUSTER", str(time.time_ns()))
-            .with_mounted_file(f"/work/{asset}", box_file)
-            .with_exec(["sh", "-c", _ensure_release(tag, f"MKube box {version}",
-                                                    f"Fedora box with Kubernetes {version} for MKube.")])
-            .with_exec(["gh", "release", "upload", tag, f"/work/{asset}", "--clobber"])
         )
 
+        # Read the catalog from the current latest release before creating a new one,
+        # so every earlier version stays listed
+        latest = (await gh.with_exec(
+            ["sh", "-c", "gh release view --json tagName -q .tagName 2>/dev/null || true"]
+        ).stdout()).strip()
         current = await gh.with_exec(
-            ["sh", "-c", f"gh release download {CATALOG_TAG} -p {CATALOG_FILE} -O - 2>/dev/null || echo '{{}}'"]
-        ).stdout()
+            ["sh", "-c", f"gh release download {latest} -p {CATALOG_FILE} -O - 2>/dev/null || echo '{{}}'"]
+        ).stdout() if latest else "{}"
         catalog = _update_catalog(json.loads(current or "{}"), self.box, version, url, checksum)
 
-        await (
-            gh.with_new_file(f"/work/{CATALOG_FILE}", json.dumps(catalog, indent=2) + "\n")
-            .with_exec(["sh", "-c", _ensure_release(CATALOG_TAG, "MKube box catalog",
-                                                    "Vagrant box catalog used as config.vm.box_url.",
-                                                    latest=False)])
-            .with_exec(["gh", "release", "upload", CATALOG_TAG, f"/work/{CATALOG_FILE}", "--clobber"])
-            .sync()
+        published = (
+            gh.with_mounted_file(f"/work/{asset}", box_file)
+            .with_new_file(f"/work/{CATALOG_FILE}", json.dumps(catalog, indent=2) + "\n")
+            .with_exec(["sh", "-c", _ensure_release(tag, f"MKube box {version}",
+                                                    f"Fedora box with Kubernetes {version} for MKube.")])
+            .with_exec(["gh", "release", "upload", tag, f"/work/{asset}", f"/work/{CATALOG_FILE}", "--clobber"])
         )
+        # Rebuilding an older version: keep the latest release's catalog in sync too
+        if latest and latest != tag and _version_key(latest) > _version_key(tag):
+            published = published.with_exec(
+                ["gh", "release", "upload", latest, f"/work/{CATALOG_FILE}", "--clobber"]
+            )
+        await published.sync()
         return f"Published {self.box} {version} ({size / 1024**3:.2f} GiB): {url}"
 
     @function
@@ -227,12 +234,11 @@ def _gh(token: dagger.Secret, repo: str) -> dagger.Container:
     )
 
 
-def _ensure_release(tag: str, title: str, notes: str, latest: bool = True) -> str:
+def _ensure_release(tag: str, title: str, notes: str) -> str:
     """Shell snippet that creates a release only if it doesn't exist yet."""
-    flags = "" if latest else " --latest=false"
     return (
         f"gh release view {tag} >/dev/null 2>&1 || "
-        f"gh release create {tag} --title '{title}' --notes '{notes}'{flags}"
+        f"gh release create {tag} --title '{title}' --notes '{notes}'"
     )
 
 
@@ -257,7 +263,7 @@ def _version_key(version: str) -> tuple[int, ...]:
 
 
 def _catalog_url(repo: str) -> str:
-    return f"https://github.com/{repo}/releases/download/{CATALOG_TAG}/{CATALOG_FILE}"
+    return f"https://github.com/{repo}/releases/latest/download/{CATALOG_FILE}"
 
 
 def _get_json(url: str) -> dict:

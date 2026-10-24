@@ -33,7 +33,7 @@ vagrant ssh < controlplane | worker >
 ---
 
 ### Building and releasing the box
-The box is built from [theJaxon/Packer](https://github.com/theJaxon/Packer) (`Fedora/44`) and released on this repo's [GitHub Releases](https://github.com/theJaxon/MKube/releases); the Vagrantfile reads the catalog from the `boxes` release.
+The box is built from [theJaxon/Packer](https://github.com/theJaxon/Packer) (`Fedora/44`) and released on this repo's [GitHub Releases](https://github.com/theJaxon/MKube/releases); each release (`v<version>`) holds the box and the Vagrant catalog, and the Vagrantfile reads the catalog from the latest release.
 The Packer build needs VirtualBox on Apple silicon, so it runs locally; linting and publishing go through [Dagger](https://dagger.io).
 
 ```bash
@@ -41,9 +41,9 @@ export GITHUB_TOKEN=...   # Contents: read & write on this repo
 make release              # lint → build → publish → bump → smoke-test
 ```
 
-Rebuilding the same Kubernetes minor replaces that box version. To pick up a rebuilt box locally, remove the cached one first:
+Rebuilding the same Kubernetes version replaces that release's box. To pick up a rebuilt box locally, remove the cached one first:
 ```bash
-vagrant box remove the-jaxon/mkube --box-version 1.37 --provider virtualbox
+vagrant box remove the-jaxon/mkube --box-version 1.37.1 --provider virtualbox
 ```
 
 ---

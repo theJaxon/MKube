@@ -9,7 +9,7 @@
 PACKER_TEMPLATE_LOCATION := $(HOME)/Documents/GitHub/Packer/Fedora/44
 # Build VM disk, ISO cache, temp files and fedora.box all go to the external drive
 BUILD_DIR                := /Volumes/Jaxon-Gaming/packer
-# Box version = Kubernetes minor from the kickstart (e.g. 1.37), looked up only when a target needs it
+# Box version = kubernetes_version from the Packer template (e.g. 1.37.1), looked up only when a target needs it
 VERSION                  = $(shell dagger call kubernetes-version --template $(PACKER_TEMPLATE_LOCATION))
 
 .PHONY: release lint build publish bump smoke-test
