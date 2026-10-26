@@ -30,6 +30,20 @@ vagrant up
 vagrant ssh < controlplane | worker >
 ```
 
+```mermaid
+flowchart LR
+    subgraph cp["controlplane node"]
+        cpinfo["192.168.100.10<br/>2 vCPU · 2 GB RAM<br/>Control plane"]
+    end
+    subgraph wk["worker node"]
+        wkinfo["192.168.100.11<br/>2 vCPU · 6 GB RAM · 40 GB disk<br/>Workloads"]
+    end
+    cp -->|"kubeadm join, API 6443"| wk
+
+    style cp color:#eab308,font-weight:bold
+    style wk color:#eab308,font-weight:bold
+```
+
 ---
 
 ### Building and releasing the box
