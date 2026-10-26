@@ -6,8 +6,7 @@ machines = [
 
 Vagrant.configure("2") do |config|
   config.vm.box = "the-jaxon/mkube"
-  # Box catalog on GitHub Releases (HCP Vagrant shuts down end of 2026)
-  config.vm.box_url = "https://github.com/theJaxon/MKube/releases/latest/download/mkube.json"
+  config.vm.box_url = "file://#{__dir__}/mkube.json"
   config.vm.box_version = "1.37.1"
   config.vm.synced_folder ".", "/vagrant"
   config.ssh.insert_key = false
