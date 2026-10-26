@@ -1,0 +1,18 @@
+{
+  "name": "the-jaxon/mkube",
+  "versions": [
+    {
+      "version": "1.37.1",
+      "providers": [
+        {
+          "name": "virtualbox",
+          "architecture": "arm64",
+          "default_architecture": true,
+          "url": "https://github.com/theJaxon/MKube/releases/download/v1.37.1/mkube-1.37.1-virtualbox-arm64.box",
+          "checksum_type": "sha256",
+          "checksum": "f5175e33e6e63ed36b55fc0bdfb2406ccbad1c71f2d8bd6beb30ebbde54def48"
+        }
+      ]
+    }
+  ]
+}
