@@ -26,7 +26,18 @@
       state: restarted
     when: crio_registries.changed
 
-- hosts: controlplane 
+- hosts: worker
+  tasks:
+  # The controlplane copies its kubeconfig to the shared /vagrant folder,
+  # point kubectl on the worker to it by default.
+  - name: Set KUBECONFIG to the shared kubeconfig file for login shells
+    ansible.builtin.copy:
+      dest: /etc/profile.d/kubeconfig.sh
+      content: |
+        export KUBECONFIG=/vagrant/kubeconf
+      mode: "0644"
+
+- hosts: controlplane
   roles:
     - controlplane
 
