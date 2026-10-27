@@ -73,7 +73,7 @@ vagrant box remove the-jaxon/mkube --box-version 1.37.1 --provider virtualbox
 ### Helper Projects
 1. [ContainerD](https://cri-o.io/) - Container Runtime
 2. [Cilium](https://cilium.io/use-cases/cni/) - Container Network Interface
-3. [NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/)
+3. [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/) - Ingress Controller
 4. [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) Dynamic provisioning (Used as default storage class)
 
 ---

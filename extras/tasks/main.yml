@@ -2,8 +2,32 @@
 - name: Install addons
   command: kubectl apply -f /vagrant/extras/files/{{ item }}.yaml
   loop:
-  - nginx-ingress-controller-v1.12.0-beta
   - local-path-storage-0.0.34
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+  # Replaces the retired ingress-nginx controller
+  # https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
+- name: Add Traefik helm repository
+  kubernetes.core.helm_repository:
+    name: traefik
+    repo_url: "https://traefik.github.io/charts"
+
+- name: Deploy Traefik ingress controller chart
+  kubernetes.core.helm:
+    name: traefik
+    chart_ref: traefik/traefik
+    release_namespace: traefik
+    create_namespace: true
+    values:
+      ingressClass:
+        enabled: true
+        isDefaultClass: true
+      service:
+        type: NodePort
+      ports:
+        web:
+          nodePort: 30000
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
 
