@@ -46,6 +46,21 @@ flowchart LR
 
 ---
 
+### Optional: GitOps with Argo CD Core
+Point MKube at a Git repo of Kubernetes manifests and it installs [Argo CD Core](https://argo-cd.readthedocs.io/en/stable/operator-manual/core/) (no UI, API server or passwords) and keeps the cluster synced to that repo.
+It's off by default and only installed when a repo URL is given:
+
+```bash
+# Branch is optional and defaults to main
+MKUBE_ARGOCD_REPO_URL=https://github.com/<you>/<manifests>.git \
+MKUBE_ARGOCD_REPO_BRANCH=main \
+vagrant up
+```
+
+Manifests are read recursively from the repo root and synced automatically (prune + self-heal). Check status from the controlplane with `kubectl -n argocd get applications`.
+
+---
+
 ### Building and releasing the box
 The box is built from [theJaxon/Packer](https://github.com/theJaxon/Packer) (`Fedora/44`) and released on this repo's [GitHub Releases](https://github.com/theJaxon/MKube/releases); each release (`v<version>`) holds the box and the Vagrant catalog, and the Vagrantfile reads the catalog from the latest release.
 The Packer build needs VirtualBox on Apple silicon, so it runs locally; linting and publishing go through [Dagger](https://dagger.io).
@@ -75,6 +90,7 @@ vagrant box remove the-jaxon/mkube --box-version 1.37.1 --provider virtualbox
 2. [Cilium](https://cilium.io/use-cases/cni/) - Container Network Interface
 3. [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/) - Ingress Controller
 4. [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) Dynamic provisioning (Used as default storage class)
+5. [Argo CD Core](https://argo-cd.readthedocs.io/en/stable/operator-manual/core/) - Optional GitOps controller
 
 ---
 

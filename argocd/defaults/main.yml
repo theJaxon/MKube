@@ -1,0 +1,14 @@
+---
+# Argo CD Core is off by default: the role only runs when a Git repo URL is given,
+# e.g. MKUBE_ARGOCD_REPO_URL=https://github.com/<you>/<manifests>.git vagrant up
+argocd_repo_url: ""
+# Branch, tag or commit to track
+argocd_repo_branch: main
+# Directory inside the repo that holds the manifests (read recursively)
+argocd_repo_path: "."
+# Manifests are applied to this namespace unless they set their own
+argocd_target_namespace: default
+
+argocd_version: v3.6.1
+argocd_namespace: argocd
+kubeconfig_path: /home/vagrant/.kube/conf

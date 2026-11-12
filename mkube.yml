@@ -62,3 +62,9 @@
 - hosts: controlplane
   roles:
     - extras
+
+# Optional: Argo CD Core, only when a manifests repo URL is given (MKUBE_ARGOCD_REPO_URL)
+- hosts: controlplane
+  roles:
+    - role: argocd
+      when: argocd_repo_url | default('') | length > 0
