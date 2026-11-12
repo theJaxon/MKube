@@ -17,6 +17,8 @@
   kubernetes.core.helm:
     name: traefik
     chart_ref: traefik/traefik
+    # Pinned so a new chart major can't change the values schema under us (Traefik v3.7.18)
+    chart_version: 42.4.0
     release_namespace: traefik
     create_namespace: true
     values:
