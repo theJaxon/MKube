@@ -23,8 +23,11 @@
       ingressClass:
         enabled: true
         isDefaultClass: true
+      # The Traefik chart sets the Service type under service.spec; its values schema
+      # rejects the old service.type key, so the release fails to install.
       service:
-        type: NodePort
+        spec:
+          type: NodePort
       ports:
         web:
           nodePort: 30000
