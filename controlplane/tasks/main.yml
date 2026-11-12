@@ -17,12 +17,20 @@
       success_msg: "Kubernetes cluster is up and running"
       fail_msg: "Kubernetes cluster isn't initialized yet .."
   rescue:
+    # Without --kubernetes-version kubeadm resolves stable-1 online and picks the newest patch,
+    # which isn't pre-pulled in the box. Use the installed kubeadm's version instead.
+    - name: Get the installed kubeadm version
+      ansible.builtin.command: kubeadm version -o short
+      register: kubeadm_version
+      changed_when: false
+
     - name: Pull required containers 
-      ansible.builtin.command: kubeadm config images pull
+      ansible.builtin.command: kubeadm config images pull --kubernetes-version {{ kubeadm_version.stdout }}
 
     - name: Initialize the cluster 
       ansible.builtin.command: > 
         kubeadm init 
+        --kubernetes-version {{ kubeadm_version.stdout }}
         --apiserver-advertise-address=192.168.100.10
         --pod-network-cidr=10.244.0.0/16
         --skip-token-print
@@ -56,6 +64,8 @@
   kubernetes.core.helm:
     name: cilium
     chart_ref: cilium/cilium
+    # Pinned to the version whose images the box pre-pulls (Packer images.txt)
+    chart_version: 1.20.3
     release_namespace: kube-system
     values:
       ipam:
