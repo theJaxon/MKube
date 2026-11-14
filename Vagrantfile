@@ -25,6 +25,12 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "mkube.yml"
         ansible.config_file = "ansible.cfg"
         ansible.raw_arguments = ['--become']
+        # Optional Argo CD Core: MKUBE_ARGOCD_REPO_URL=<git url> [MKUBE_ARGOCD_REPO_BRANCH=<branch>] vagrant up
+        argocd_vars = {
+          argocd_repo_url: ENV['MKUBE_ARGOCD_REPO_URL'],
+          argocd_repo_branch: ENV['MKUBE_ARGOCD_REPO_BRANCH']
+        }.reject { |_, v| v.to_s.strip.empty? }
+        ansible.extra_vars = argocd_vars unless argocd_vars.empty?
       end
     end
   end

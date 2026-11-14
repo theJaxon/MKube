@@ -1,0 +1,52 @@
+---
+# Argo CD Core: application-controller, repo-server, applicationset-controller and redis.
+# No API server, UI, Dex or admin password - the cluster is managed purely from Git.
+# https://argo-cd.readthedocs.io/en/stable/operator-manual/core/
+- name: Create Argo CD namespace
+  ansible.builtin.command: kubectl create namespace {{ argocd_namespace }}
+  register: argocd_ns
+  changed_when: argocd_ns.rc == 0
+  failed_when: argocd_ns.rc != 0 and 'AlreadyExists' not in argocd_ns.stderr
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+  # Server-side apply: the ApplicationSet CRD is too large for client-side apply's annotation
+- name: Install Argo CD Core
+  ansible.builtin.command: >
+    kubectl apply -n {{ argocd_namespace }} --server-side --force-conflicts
+    -f https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/core-install.yaml
+  register: argocd_install
+  changed_when: "'serverside-applied' in argocd_install.stdout"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Wait for the Application CRD to be established
+  ansible.builtin.command: kubectl wait --for condition=established --timeout=120s crd/applications.argoproj.io
+  changed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Wait for Argo CD components to be ready
+  ansible.builtin.command: kubectl -n {{ argocd_namespace }} rollout status {{ item }} --timeout=300s
+  loop:
+    - statefulset/argocd-application-controller
+    - deployment/argocd-repo-server
+    - deployment/argocd-redis
+  changed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Render the Application for the manifests repo
+  ansible.builtin.template:
+    src: application.yaml.j2
+    dest: /home/vagrant/argocd-application.yaml
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+
+- name: Point Argo CD at the manifests repo
+  ansible.builtin.command: kubectl apply --server-side -f /home/vagrant/argocd-application.yaml
+  register: argocd_app
+  changed_when: "'unchanged' not in argocd_app.stdout"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
